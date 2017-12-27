@@ -1,6 +1,6 @@
 # WooCommerce Subscriptions One-to-One
 
-Hides subscription products from the store that have already been subscribed to.
+Hides subscription products from the store that are currently subscribed to.
 
 Use case: store owner wants products and subscriptions to have a one-to-one relationship, i.e. each product should only be subscribed to once. For example, subscription product is a child to be sponsored, and only one subscriber should be sponsoring that child at a time.
 

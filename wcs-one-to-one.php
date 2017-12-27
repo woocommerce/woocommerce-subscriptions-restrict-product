@@ -49,7 +49,6 @@ register_activation_hook( __FILE__,'create_one_to_one_cache'); // creates array 
 add_filter( 'woocommerce_subscription_status_updated', 'update_one_to_one_cache', 10, 2 ); // updates the array whenever subscription status is updated
 add_filter( 'woocommerce_product_is_visible', 'one_to_one_checker', 10, 2 ); // when displaying product on front end, hides product if is in the array
 register_deactivation_hook( __FILE__, 'cleanup_one_to_one_cache' ); // deletes array when plugin is deactivated
-}
 
 /**
 * creates array of product IDs in the options table when plugin is activated
