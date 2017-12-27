@@ -36,12 +36,12 @@
 require_once( 'includes/class-pp-dependencies.php' );
 
 if ( false === PP_Dependencies::is_woocommerce_active( '3.0' ) ) {
-	PP_Dependencies::enqueue_admin_notice( '{plugin_name}', 'WooCommerce', '3.0' );
+	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions One-to-One', 'WooCommerce', '3.0' );
 	return;
 }
 
 if ( false === PP_Dependencies::is_subscriptions_active( '2.1' ) ) {
-	PP_Dependencies::enqueue_admin_notice( '{plugin_name}', 'WooCommerce Subscriptions', '2.1' );
+	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions One-to-One', 'WooCommerce Subscriptions', '2.1' );
 	return;
 }
 
@@ -53,7 +53,7 @@ register_deactivation_hook( __FILE__, 'cleanup_one_to_one_cache' ); // deletes a
 /**
 * creates array of product IDs in the options table when plugin is activated
 */
-public function create_one_to_one_cache() {
+function create_one_to_one_cache() {
 
 	$products_with_subscription = [];
 
@@ -80,7 +80,7 @@ public function create_one_to_one_cache() {
 * @param string
 * @param string
 */
-public function update_one_to_one_cache($subscription, $new_status, $old_status) {
+function update_one_to_one_cache($subscription, $new_status, $old_status) {
 
 	$cache = get_option('wcs_unended_subs_cache');
 
@@ -113,13 +113,13 @@ public function update_one_to_one_cache($subscription, $new_status, $old_status)
 * @param boolean
 * @param integer
 */
-public function one_to_one_checker( $is_visible, $id ) {
+function one_to_one_checker( $is_visible, $id ) {
 
 	$cache = get_option('wcs_unended_subs_cache');
 	if ($cache != false) {
 		$product = wc_get_product( $id );
 
-		if ( in_array($product->get_id(), $cache) {
+		if ( in_array($product->get_id(), $cache) ) {
 			$is_visible = false;
 		}
 	}
