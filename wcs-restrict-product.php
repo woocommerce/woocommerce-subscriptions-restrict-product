@@ -62,9 +62,13 @@ add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_c
 
 // add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
 // add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
+
+// Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
 add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
 add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
 
+// when displaying product on front end, hides product if restricted
+add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_purchasable', 10, 2 );
 
 /**
 * creates array of product IDs in the options table when plugin is activated
