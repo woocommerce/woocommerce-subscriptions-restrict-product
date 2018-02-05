@@ -36,12 +36,12 @@
 require_once( 'includes/class-pp-dependencies.php' );
 
 if ( false === PP_Dependencies::is_woocommerce_active( '3.0' ) ) {
-	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions One-to-One', 'WooCommerce', '3.0' );
+	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions Restrict Product', 'WooCommerce', '3.0' );
 	return;
 }
 
 if ( false === PP_Dependencies::is_subscriptions_active( '2.1' ) ) {
-	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions One-to-One', 'WooCommerce Subscriptions', '2.1' );
+	PP_Dependencies::enqueue_admin_notice( 'WooCommerce Subscriptions Restrict Product', 'WooCommerce Subscriptions', '2.1' );
 	return;
 }
 
@@ -60,12 +60,12 @@ add_action( 'woocommerce_process_product_meta', 'wcs_restriction_save_product_fi
 // updates the array whenever subscription status is updated
 add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_cache', 10, 3 );
 
-// add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
-// add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
-
 // Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
 add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
 add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
+
+// bypasses restriction for switches only if switching to same variable product
+add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
 
 // when displaying product on front end, hides product if restricted
 add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_purchasable', 10, 2 );
@@ -134,12 +134,11 @@ function update_wcs_restriction_cache($subscription, $new_status, $old_status) {
 		}
 		update_option( 'wcs_restriction_cache', $cache );
 	}
-
 }
 
 /**
- * Adds restrict product option to 'Edit Product' screen.
- */
+* Adds restrict product option to 'Edit Product' screen.
+*/
 function wcs_restriction_admin_edit_product_fields() {
 	global $post;
 
@@ -155,77 +154,122 @@ function wcs_restriction_admin_edit_product_fields() {
 		'custom_attributes' => array(
 			'step' => '1',
 			'min' => '0', )
-	) );
-	echo '</div>';
+		) );
+		echo '</div>';
 
-	do_action( 'woocommerce_subscriptions_product_options_advanced' );
-}
-
-/**
-* Save the data value from the custom field
-*
-* @param int
-*/
-function wcs_restriction_save_product_fields( $post_id ) {
-	$product_restriction = $_POST['_product_restriction'];
-	update_post_meta( $post_id, '_product_restriction', esc_attr( $product_restriction ) );
-}
-
-/**
-* main helper function that makes it not purchasable by checking against cache to see if subscription is currently restricted
-*
-* @param boolean
-* @param integer
-* @return boolean
-*/
-function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
-	if ($is_purchasable) {
-		$cache = get_option('wcs_restriction_cache');
-		$product_restriction_option = get_post_meta( $id, '_product_restriction', true );
-		if ( !isset($product_restriction_option) || empty($product_restriction_option)) $product_restriction_option = 0;
-		// error_log(print_r($cache, TRUE));
-		if ($cache != false) {
-			if ( isset($cache[$id]) && ($product_restriction_option > 0) && ($cache[$id] >= $product_restriction_option) ) {
-				$is_purchasable = false;
-			}
-		}
+		do_action( 'woocommerce_subscriptions_product_options_advanced' );
 	}
-	return $is_purchasable;
-}
 
-/**
-* Determines whether a product is purchasable based on whether the cart is set to resubscribe or renew.
-*
-* @param boolean
-* @param instance of WC_Product object
-* @return boolean
-*/
-function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
+	/**
+	* Save the data value from the custom field
+	*
+	* @param int
+	*/
+	function wcs_restriction_save_product_fields( $post_id ) {
+		$product_restriction = $_POST['_product_restriction'];
+		update_post_meta( $post_id, '_product_restriction', esc_attr( $product_restriction ) );
+	}
 
-	// check if restricted first
-	$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
-
-	// then, allow to be purchased if renewal or resubscribe
-	if ( false === $is_purchasable ) {
-		// Resubscribe logic
-		if ( isset( $_GET['resubscribe'] ) || false !== ( $resubscribe_cart_item = wcs_cart_contains_resubscribe() ) ) {
-			$subscription_id       = ( isset( $_GET['resubscribe'] ) ) ? absint( $_GET['resubscribe'] ) : $resubscribe_cart_item['subscription_resubscribe']['subscription_id'];
-			$subscription          = wcs_get_subscription( $subscription_id );
-			if ( false != $subscription && $subscription->has_product( $product->get_id() ) && wcs_can_user_resubscribe_to( $subscription ) && 'pending-cancel' != $subscription->get_status() ) {
-				$is_purchasable = true;
-			}
-			// Renewal logic
-		} elseif ( isset( $_GET['subscription_renewal'] ) || wcs_cart_contains_renewal() ) {
-			$is_purchasable = true;
-			// Restoring cart from session, so need to check the cart in the session (wcs_cart_contains_renewal() only checks the cart)
-		} elseif ( WC()->session->cart ) {
-			foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
-				if ( $product->get_id() == $cart_item['product_id'] && ( isset( $cart_item['subscription_renewal'] ) || isset( $cart_item['subscription_resubscribe'] ) ) ) {
-					$is_purchasable = true;
-					break;
+	/**
+	* main helper function that makes it not purchasable by checking against cache to see if subscription is currently restricted
+	*
+	* @param boolean
+	* @param integer
+	* @return boolean
+	*/
+	function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
+		if ($is_purchasable) {
+			$cache = get_option('wcs_restriction_cache');
+			$product_restriction_option = get_post_meta( $id, '_product_restriction', true );
+			if ( !isset($product_restriction_option) || empty($product_restriction_option)) $product_restriction_option = 0;
+			// error_log(print_r($cache, TRUE));
+			if ($cache != false) {
+				if ( isset($cache[$id]) && ($product_restriction_option > 0) && ($cache[$id] >= $product_restriction_option) ) {
+					$is_purchasable = false;
 				}
 			}
 		}
+		return $is_purchasable;
 	}
-	return $is_purchasable;
-}
+
+	/**
+	* Determines whether a product is purchasable based on whether the cart is set to resubscribe or renew.
+	*
+	* @param boolean
+	* @param instance of WC_Product object
+	* @return boolean
+	*/
+	function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
+
+		// check if restricted first
+		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
+
+		// then, allow to be purchased if renewal or resubscribe
+		if ( false === $is_purchasable ) {
+			// Resubscribe logic
+			if ( isset( $_GET['resubscribe'] ) || false !== ( $resubscribe_cart_item = wcs_cart_contains_resubscribe() ) ) {
+				$subscription_id       = ( isset( $_GET['resubscribe'] ) ) ? absint( $_GET['resubscribe'] ) : $resubscribe_cart_item['subscription_resubscribe']['subscription_id'];
+				$subscription          = wcs_get_subscription( $subscription_id );
+				if ( false != $subscription && $subscription->has_product( $product->get_id() ) && wcs_can_user_resubscribe_to( $subscription ) && 'pending-cancel' != $subscription->get_status() ) {
+					$is_purchasable = true;
+				}
+				// Renewal logic
+			} elseif ( isset( $_GET['subscription_renewal'] ) || wcs_cart_contains_renewal() ) {
+				$is_purchasable = true;
+				// Restoring cart from session, so need to check the cart in the session (wcs_cart_contains_renewal() only checks the cart)
+			} elseif ( WC()->session->cart ) {
+				foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
+					if ( $product->get_id() == $cart_item['product_id'] && ( isset( $cart_item['subscription_renewal'] ) || isset( $cart_item['subscription_resubscribe'] ) ) ) {
+						$is_purchasable = true;
+						break;
+					}
+				}
+			}
+		}
+		return $is_purchasable;
+	}
+
+	/**
+	* bypasses restriction for switches only if switching to same variable product
+	*
+	* @param boolean
+	* @param instance of WC_Product object
+	* @return boolean
+	*/
+	function wcs_restriction_is_purchasable_switch( $is_purchasable, $product ) {
+
+		// Check if the product is restricted first
+		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
+
+		// We're only concerned with variable products during switch because individual grouped products should be handled on their own.
+		if ( false === $is_purchasable && 'subscription_variation' === $product->get_type() ) {
+			// If the customer has requested to switch
+			if ( isset( $_GET['switch-subscription'] ) ) {
+
+				// check if the product is a variation of the same parent product
+				$subscription = wcs_get_subscription($_GET['switch-subscription']);
+				$line_item_id = $_GET['item'];
+				foreach ( $subscription->get_items() as $item_id => $item_values ) {
+					$product_id = $item_values->get_product_id();
+
+					if (($line_item_id == $item_id) && ($product_id == $product->get_parent_id())) {
+						$is_purchasable = true;
+					}
+				}
+				// If the cart contains a switch to this product
+			} elseif ( WC_Subscriptions_Switcher::cart_contains_switch_for_product( $product ) ) {
+				$is_purchasable = true;
+				// If restoring cart from session, the cart doesn't exist so cart_contains_switch_for_product will fail.
+			} elseif ( isset( WC()->session->cart ) ) {
+
+				foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
+					if ( $product->get_id() == $cart_item['product_id'] && isset( $cart_item['subscription_switch'] ) ) {
+						$is_purchasable = true;
+						break;
+					}
+				}
+			}
+		}
+
+		return $is_purchasable;
+	}
