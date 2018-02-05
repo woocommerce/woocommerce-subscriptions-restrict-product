@@ -202,7 +202,7 @@ function wcs_restriction_admin_edit_product_fields() {
 	function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 
 		// check if restricted first
-		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
+		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
 
 		// then, allow to be purchased if renewal or resubscribe
 		if ( false === $is_purchasable ) {
@@ -239,8 +239,7 @@ function wcs_restriction_admin_edit_product_fields() {
 	function wcs_restriction_is_purchasable_switch( $is_purchasable, $product ) {
 
 		// Check if the product is restricted first
-		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
-
+		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
 		// We're only concerned with variable products during switch because individual grouped products should be handled on their own.
 		if ( false === $is_purchasable && 'subscription_variation' === $product->get_type() ) {
 			// If the customer has requested to switch
@@ -261,9 +260,8 @@ function wcs_restriction_admin_edit_product_fields() {
 				$is_purchasable = true;
 				// If restoring cart from session, the cart doesn't exist so cart_contains_switch_for_product will fail.
 			} elseif ( isset( WC()->session->cart ) ) {
-
 				foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
-					if ( $product->get_id() == $cart_item['product_id'] && isset( $cart_item['subscription_switch'] ) ) {
+					if ( $product->get_parent_id() == $cart_item['product_id'] && isset( $cart_item['subscription_switch'] ) ) {
 						$is_purchasable = true;
 						break;
 					}
