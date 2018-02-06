@@ -60,6 +60,9 @@ add_action( 'woocommerce_process_product_meta', 'wcs_restriction_save_product_fi
 // updates the array whenever subscription status is updated
 add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_cache', 10, 3 );
 
+// updates the array whenever subscription is created
+add_filter( 'woocommerce_checkout_subscription_created', 'add_to_wcs_restriction_cache');
+
 // Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
 add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
 add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
@@ -99,7 +102,23 @@ function create_wcs_restriction_cache() {
 function cleanup_wcs_restriction_cache() {
 	delete_option( 'wcs_restriction_cache' );
 }
+/**
+* updates the array whenever subscription is created
+*
+* @param instance of a WC_Subscription object
+*/
+function add_to_wcs_restriction_cache($subscription, $order = null, $recurring_cart = null) {
+	$cache = get_option('wcs_restriction_cache');
 
+	foreach ( $subscription->get_items() as $item_id => $line_item ) {
+		$product_id = $line_item->get_product_id();
+		$quantity = $line_item->get_quantity();
+		if (!array_key_exists($product_id, $cache)) $cache[$product_id] = 0;
+		$cache[$product_id] += $quantity;
+	}
+	update_option( 'wcs_restriction_cache', $cache );
+
+}
 /**
 * updates the array whenever subscription status is updated
 *
@@ -110,7 +129,7 @@ function cleanup_wcs_restriction_cache() {
 function update_wcs_restriction_cache($subscription, $new_status, $old_status) {
 	$cache = get_option('wcs_restriction_cache');
 
-	$unended_statuses = array('active', 'on-hold', 'pending-cancel');
+	$unended_statuses = array('active', 'pending', 'on-hold', 'pending-cancel');
 
 	if (in_array($new_status, $unended_statuses) && !in_array($old_status, $unended_statuses)) {
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
