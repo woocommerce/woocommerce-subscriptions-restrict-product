@@ -221,7 +221,7 @@ function wcs_restriction_admin_edit_product_fields() {
 	function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 
 		// check if restricted first
-		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
+		$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
 
 		// then, allow to be purchased if renewal or resubscribe
 		if ( false === $is_purchasable ) {
