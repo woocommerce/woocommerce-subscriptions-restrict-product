@@ -201,7 +201,10 @@ function wcs_restriction_admin_edit_product_fields() {
 			$cache = get_option('wcs_restriction_cache');
 			$product_restriction_option = get_post_meta( $id, '_product_restriction', true );
 			if ( !isset($product_restriction_option) || empty($product_restriction_option)) $product_restriction_option = 0;
+			// uncomment the next line to print the current cache
 			// error_log(print_r($cache, TRUE));
+
+			// TODO: ACCOUNT FOR MULTIPLE QUANTITIES BEING PURCHASED
 			if ($cache != false) {
 				if ( isset($cache[$id]) && ($product_restriction_option > 0) && ($cache[$id] >= $product_restriction_option) ) {
 					$is_purchasable = false;
