@@ -73,6 +73,9 @@ add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restrictio
 // when displaying product on front end, hides product if restricted
 add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_purchasable', 10, 2 );
 
+// add max to quantity selector on product page
+add_filter( 'woocommerce_quantity_input_max', 'wcs_restriction_cart_quantity', 10, 2 );
+
 /**
 * creates array of product IDs in the options table when plugin is activated
 */
@@ -202,9 +205,7 @@ function wcs_restriction_admin_edit_product_fields() {
 			$product_restriction_option = get_post_meta( $id, '_product_restriction', true );
 			if ( !isset($product_restriction_option) || empty($product_restriction_option)) $product_restriction_option = 0;
 			// uncomment the next line to print the current cache
-			// error_log(print_r($cache, TRUE));
-
-			// TODO: ACCOUNT FOR MULTIPLE QUANTITIES BEING PURCHASED
+			error_log(print_r($cache, TRUE));
 			if ($cache != false) {
 				if ( isset($cache[$id]) && ($product_restriction_option > 0) && ($cache[$id] >= $product_restriction_option) ) {
 					$is_purchasable = false;
@@ -293,3 +294,44 @@ function wcs_restriction_admin_edit_product_fields() {
 
 		return $is_purchasable;
 	}
+
+	/**
+	* helper function that gets quantity of given product in the cart
+	*
+	* @param int
+	* @return int
+	*/
+	function get_product_quantity_in_cart( $product_id ) {
+
+		$quantity = 0;
+
+		if ( ! empty( WC()->cart->cart_contents ) ) {
+			foreach ( WC()->cart->cart_contents as $cart_item ) {
+				if ( $cart_item['product_id'] == $product_id ) {
+					$quantity += $cart_item['quantity'];
+				}
+			}
+		}
+
+		return $quantity;
+	}
+
+	/**
+	* add max to quantity selector on product page
+	*
+	* @param int
+	* @param instance of WC_Product object
+	* @return int
+	*/
+	function wcs_restriction_cart_quantity( $max, $product ) {
+$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
+		// (the total number allowed - the total quantity of active subscriptions to this product - number of products in the cart)
+		$product_restriction_option = get_post_meta( $product->get_id(), '_product_restriction', true );
+		$cache = get_option('wcs_restriction_cache');
+		$num_active_subs_for_product = $cache[$product->get_id()];
+		$quantity_in_cart = get_product_quantity_in_cart(	$product->get_parent_id() );
+		$max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
+		error_log('product_restriction_option - num_active_subs_for_product - quantity_in_cart = max | ' . $product_restriction_option . ' - ' . $num_active_subs_for_product . ' - ' . $quantity_in_cart . ' = ' . $max);
+
+		return $max;
+	};
