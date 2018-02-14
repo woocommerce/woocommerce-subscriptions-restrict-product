@@ -74,7 +74,10 @@ add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restrictio
 add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_purchasable', 10, 2 );
 
 // add max to quantity selector on product page
-add_filter( 'woocommerce_quantity_input_max', 'wcs_restriction_cart_quantity', 10, 2 );
+add_filter( 'woocommerce_quantity_input_max', 'wcs_restriction_quantity_input_max', 10, 2 );
+
+// Validating the quantity on add to cart action with the quantity of the same product available in the cart.
+add_filter( 'woocommerce_add_to_cart_validation', 'wcs_restriction_qty_add_to_cart_validation', 1, 5 );
 
 /**
 * creates array of product IDs in the options table when plugin is activated
@@ -316,6 +319,8 @@ function wcs_restriction_admin_edit_product_fields() {
 		return $quantity;
 	}
 
+
+
 	/**
 	* add max to quantity selector on product page
 	*
@@ -323,15 +328,60 @@ function wcs_restriction_admin_edit_product_fields() {
 	* @param instance of WC_Product object
 	* @return int
 	*/
-	function wcs_restriction_cart_quantity( $max, $product ) {
-$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
+	function wcs_restriction_quantity_input_max( $max, $product ) {
+		$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
 		// (the total number allowed - the total quantity of active subscriptions to this product - number of products in the cart)
 		$product_restriction_option = get_post_meta( $product->get_id(), '_product_restriction', true );
 		$cache = get_option('wcs_restriction_cache');
 		$num_active_subs_for_product = $cache[$product->get_id()];
 		$quantity_in_cart = get_product_quantity_in_cart(	$product->get_parent_id() );
 		$max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
-		error_log('product_restriction_option - num_active_subs_for_product - quantity_in_cart = max | ' . $product_restriction_option . ' - ' . $num_active_subs_for_product . ' - ' . $quantity_in_cart . ' = ' . $max);
+		// error_log('product_restriction_option - num_active_subs_for_product - quantity_in_cart = max | ' . $product_restriction_option . ' - ' . $num_active_subs_for_product . ' - ' . $quantity_in_cart . ' = ' . $max);
 
 		return $max;
 	};
+
+	/*
+	* Validating the quantity on add to cart action with the quantity of the same product available in the cart.
+	* param
+	* param
+	* param
+	* param
+	* param
+	* return
+	*/
+	function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quantity, $variation_id = '', $variations = '' ) {
+
+		$product = get_product( $product_id );
+		$product_max = wcs_restriction_quantity_input_max( 0, $product );
+
+		if ( ! empty( $product_max ) ) {
+			if ( false !== $product_max ) {
+				$new_max = $product_max;
+			} else {
+				// neither max is set, so get out
+				return $passed;
+			}
+		}
+
+		$already_in_cart 	= get_product_quantity_in_cart( $product_id );
+
+		$product_title 		= $product->get_title();
+
+		if ( ! empty( $already_in_cart ) ) {
+
+			if ( ( $already_in_cart + $quantity ) > $new_max ) {
+				if ($new_max < 0) $new_max = 0;
+				$passed = false;
+				wc_add_notice( apply_filters( 'isa_wc_max_qty_error_message_already_had', sprintf( __( 'This product is restricted. You can add a maximum of %1$s to %3$s. You already have %4$s.', 'woocommerce-max-quantity' ),
+				$new_max,
+				$product_title,
+				'<a href="' . esc_url( wc_get_cart_url() ) . '">' . __( 'your cart', 'woocommerce-max-quantity' ) . '</a>',
+				$already_in_cart ),
+				$new_max,
+				$already_in_cart ),
+				'error' );
+			}
+		}
+		return $passed;
+	}
