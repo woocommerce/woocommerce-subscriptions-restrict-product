@@ -18,6 +18,47 @@ To install:
 1. Click **Install Now**
 1. Click **Activate**
 
+## How-to
+
+### Set Product Restriction
+
+There are two ways to set a product restriction, either _storewide_ or on a _product level_. Setting a _product level_ restriction is more specific and will override the _storewide default_. If you set either to '0' or leave them empty, they are considered not set.
+
+#### Storewide Restriction
+
+You can set a default storewide restriction which will apply to all subscription products by going to *WooCommerce -> settings -> Subscriptions (tab) -> Product Restriction*
+
+TODO: add screenshot
+
+#### Product-level Restriction
+
+You can also set a product restriction for a specific product by editing the product, and clicking on the 'Advanced Options' tab in the Product Data metabox. This will set the product restriction on a product level for simple and variable subscription products. That means that the restriction applies no matter which variation of a variable product is subscribed to.
+
+If set to any number other than '0', the product-level restriction will override the storewide restriction setting.
+
+TODO: add screenshot
+
+### Renewals and Switching
+
+Renewals and Switches are taken into account when checking if a purchase should be restricted.
+
+#### Renewals
+_Automatic renewals_ are not restricted at all, and should process normally. Similarly, _manual renewals_ will still allow the product to be purchased/renewed through the cart.
+
+#### Subscription Switching
+Switching is accounted for when checking restrictions. When switching between simple subscription products, the checks still occur as normal. When switching between variations of the same product, the restrictions are ignored, allowing the switch to occur.
+
+### Warning Messages
+
+There is currently no way to customize the warning message presented when a restriction is encountered. Additionally, when product variations are deemed not purchasable, the default WooCommerce alert box is triggered, which is not descriptive of _why_.
+
+For this reason, we recommend you add in some descriptive text to your product description indicating that it is restricted, and why.
+
+### Additional Notes
+
+- Restrictions don't apply retroactively, only to future purchases. In other words, any given purchase is checked against the current restriction and current number of active site-wide subscriptions. No already-existing subscriptions will be cancelled or suspended if you change the restriction number.
+- Deactivating the plugin will stop the restriction checks, and will delete the cache. However, the restriction option values (set in the WooCommerce settings tab or product options) will stay in place in case you choose to reactivate the plugin in the future.
+
 ### Updates
 
 To keep the plugin up-to-date, use the [GitHub Updater](https://github.com/afragen/github-updater).
