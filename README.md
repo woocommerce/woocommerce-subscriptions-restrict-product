@@ -28,7 +28,7 @@ There are two ways to set a product restriction, either _storewide_ or on a _pro
 
 You can set a default storewide restriction which will apply to all subscription products by going to *WooCommerce -> settings -> Subscriptions (tab) -> Product Restriction*
 
-TODO: add screenshot
+![Admin settings](admin-settings.png)
 
 #### Product-level Restriction
 
@@ -36,7 +36,7 @@ You can also set a product restriction for a specific product by editing the pro
 
 If set to any number other than '0', the product-level restriction will override the storewide restriction setting.
 
-TODO: add screenshot
+![Product settings](product-settings.png)
 
 ### Renewals and Switching
 
