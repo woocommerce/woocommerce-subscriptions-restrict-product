@@ -1,3 +1,5 @@
+**NOTE: This mini-plugin is still in development and isn't ready for production**
+
 # WooCommerce Subscriptions Restrict Product
 
 Restricts subscription products to a certain number of total active (unended) subscriptions on a site.
