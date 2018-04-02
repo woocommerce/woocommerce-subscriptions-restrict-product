@@ -46,7 +46,7 @@ if ( false === PP_Dependencies::is_subscriptions_active( '2.1' ) ) {
 }
 
 // creates array of product IDs in the options table when plugin is activated
-register_activation_hook( __FILE__,'create_wcs_restriction_cache');
+register_activation_hook( __FILE__,'create_wcs_restriction_cache' );
 
 // deletes array when plugin is deactivated
 register_deactivation_hook( __FILE__, 'cleanup_wcs_restriction_cache' );
@@ -67,7 +67,7 @@ add_action( 'woocommerce_process_product_meta', 'wcs_restriction_save_product_fi
 add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_cache', 10, 3 );
 
 // updates the array whenever subscription is created
-add_filter( 'woocommerce_checkout_subscription_created', 'add_to_wcs_restriction_cache');
+add_filter( 'woocommerce_checkout_subscription_created', 'add_to_wcs_restriction_cache' );
 
 // Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
 add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
@@ -99,11 +99,13 @@ function create_wcs_restriction_cache() {
 		'subscription_status' => array( 'active', 'pending', 'on-hold', 'pending-cancel' ),
 	) );
 
-	foreach ($unended_subscriptions as $subscription) {
+	foreach ( $unended_subscriptions as $subscription ) {
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
 			$product_id = $line_item->get_product_id();
 			$quantity = $line_item->get_quantity();
-			if (!array_key_exists($product_id, $products_with_subscription)) $products_with_subscription[$product_id] = 0;
+			if ( !array_key_exists( $product_id, $products_with_subscription ) ) {
+				$products_with_subscription[$product_id] = 0;
+			}
 			$products_with_subscription[$product_id] += $quantity;
 		}
 	}
@@ -117,23 +119,27 @@ function create_wcs_restriction_cache() {
 function cleanup_wcs_restriction_cache() {
 	delete_option( 'wcs_restriction_cache' );
 }
+
 /**
 * updates the array whenever subscription is created
 *
 * @param instance of a WC_Subscription object
 */
-function add_to_wcs_restriction_cache($subscription, $order = null, $recurring_cart = null) {
-	$cache = get_option('wcs_restriction_cache');
+function add_to_wcs_restriction_cache( $subscription, $order = null, $recurring_cart = null ) {
+	$cache = get_option( 'wcs_restriction_cache' );
 
 	foreach ( $subscription->get_items() as $item_id => $line_item ) {
 		$product_id = $line_item->get_product_id();
 		$quantity = $line_item->get_quantity();
-		if (!array_key_exists($product_id, $cache)) $cache[$product_id] = 0;
+		if ( !array_key_exists( $product_id, $cache ) ) {
+			$cache[$product_id] = 0;
+		}
 		$cache[$product_id] += $quantity;
 	}
-	update_option( 'wcs_restriction_cache', $cache );
 
+	update_option( 'wcs_restriction_cache', $cache );
 }
+
 /**
 * updates the array whenever subscription status is updated
 *
@@ -141,30 +147,31 @@ function add_to_wcs_restriction_cache($subscription, $order = null, $recurring_c
 * @param string
 * @param string
 */
-function update_wcs_restriction_cache($subscription, $new_status, $old_status) {
-	$cache = get_option('wcs_restriction_cache');
+function update_wcs_restriction_cache( $subscription, $new_status, $old_status ) {
+	$cache = get_option( 'wcs_restriction_cache' );
 
-	$unended_statuses = array('active', 'pending', 'on-hold', 'pending-cancel');
+	$unended_statuses = array( 'active', 'pending', 'on-hold', 'pending-cancel' );
 
-	if (in_array($new_status, $unended_statuses) && !in_array($old_status, $unended_statuses)) {
+	if ( array_key_exists( $new_status, $unended_statuses ) && ! array_key_exists( $old_status, $unended_statuses ) ) {
+      foreach ( $subscription->get_items() as $item_id => $line_item ) {
+          $product_id = $line_item->get_product_id();
+          $quantity = $line_item->get_quantity();
+          if ( ! array_key_exists( $product_id, $cache ) ) {
+              $cache[ $product_id ] = 0;
+          }
+          $cache[ $product_id ] += $quantity;
+      }
+      update_option( 'wcs_restriction_cache', $cache );
+
+	} elseif ( array_key_exists( $old_status, $unended_statuses ) && !array_key_exists( $new_status, $unended_statuses ) ) {
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
 			$product_id = $line_item->get_product_id();
 			$quantity = $line_item->get_quantity();
-			if (!array_key_exists($product_id, $cache)) $cache[$product_id] = 0;
-			$cache[$product_id] += $quantity;
-		}
-		update_option( 'wcs_restriction_cache', $cache );
-
-	} elseif (in_array($old_status, $unended_statuses) && !in_array($new_status, $unended_statuses)) {
-		foreach ( $subscription->get_items() as $item_id => $line_item ) {
-			$product_id = $line_item->get_product_id();
-			$quantity = $line_item->get_quantity();
-			if ($cache[$product_id] <= 1) {
-				unset($cache[$product_id]); // remove product from array completely
-			} elseif ($cache[$product_id] > 1) {
+			if ( $cache[$product_id] <= 1 ) {
+				unset( $cache[$product_id] ); // remove product from array completely
+			} elseif ( $cache[$product_id] > 1 ) {
 				$cache[$product_id] -= $quantity; // or just reduce the number
 			}
-
 		}
 		update_option( 'wcs_restriction_cache', $cache );
 	}
@@ -216,7 +223,7 @@ function restrict_product_admin_settings( $settings ) {
  */
 function save_restrict_product_admin_settings() {
 	$default_product_restriction = $_POST['_default_product_restriction'];
-	update_option('_default_product_restriction', esc_attr( $default_product_restriction ) );
+	update_option( '_default_product_restriction', esc_attr( $default_product_restriction ) );
 }
 
 /**
@@ -241,29 +248,32 @@ function wcs_restriction_admin_edit_product_fields() {
 		echo '</div>';
 
 		do_action( 'woocommerce_subscriptions_product_options_advanced' );
+}
+
+/**
+* Save the data value from the custom field
+*
+* @param int
+*/
+function wcs_restriction_save_product_fields( $post_id ) {
+	$product_restriction = $_POST['_product_restriction'];
+	update_post_meta( $post_id, '_product_restriction', esc_attr( $product_restriction ) );
+}
+
+/**
+* helper function to check product-level restriction, then fall back to default
+*
+* @param integer
+* @return integer
+*/
+function wcs_restrict_product_get_restriction( $product_id ) {
+
+	$product_restriction = get_post_meta( $product_id, '_product_restriction', true );
+
+	if ( !isset( $product_restriction ) || empty( $product_restriction ) || 0 == $product_restriction ) {
+		$product_restriction = get_option( '_default_product_restriction', 0 );
 	}
 
-	/**
-	* Save the data value from the custom field
-	*
-	* @param int
-	*/
-	function wcs_restriction_save_product_fields( $post_id ) {
-		$product_restriction = $_POST['_product_restriction'];
-		update_post_meta( $post_id, '_product_restriction', esc_attr( $product_restriction ) );
-	}
-
-	/**
-	* helper function to check product-level restriction, then fall back to default
-	*
-	* @param integer
-	* @return integer
-	*/
-function wcs_restrict_product_get_restriction($product_id) {
-	$product_restriction = get_post_meta( $product_id, '_product_restriction', true);
-	if (!isset($product_restriction) || empty($product_restriction) || 0 == $product_restriction) {
-		$product_restriction = get_option('_default_product_restriction', 0);
-	}
 	return $product_restriction;
 }
 
@@ -275,17 +285,21 @@ function wcs_restrict_product_get_restriction($product_id) {
 * @return boolean
 */
 function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
-	if ($is_purchasable) {
-		$cache = get_option('wcs_restriction_cache');
-		$product_restriction_option = wcs_restrict_product_get_restriction($id);
+
+	if ( $is_purchasable ) {
+		$cache = get_option( 'wcs_restriction_cache' );
+		$product_restriction_option = wcs_restrict_product_get_restriction( $id );
+
 		// uncomment the next line to print the current cache
-		// error_log(print_r($cache, TRUE));
-		if ($cache != false) {
-			if ( isset($cache[$id]) && ($product_restriction_option > 0) && ($cache[$id] >= $product_restriction_option) ) {
+		// error_log( print_r( $cache, TRUE ) );
+
+		if ( $cache != false ) {
+			if ( isset($cache[$id] ) && ( $product_restriction_option > 0 ) && ( $cache[$id] >= $product_restriction_option ) ) {
 				$is_purchasable = false;
 			}
 		}
 	}
+
 	return $is_purchasable;
 }
 
@@ -323,6 +337,7 @@ function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 			}
 		}
 	}
+
 	return $is_purchasable;
 }
 
@@ -337,18 +352,17 @@ function wcs_restriction_is_purchasable_switch( $is_purchasable, $product ) {
 
 	// Check if the product is restricted first
 	$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
+
 	// We're only concerned with variable products during switch because individual grouped products should be handled on their own.
 	if ( false === $is_purchasable && 'subscription_variation' === $product->get_type() ) {
 		// If the customer has requested to switch
 		if ( isset( $_GET['switch-subscription'] ) ) {
-
 			// check if the product is a variation of the same parent product
-			$subscription = wcs_get_subscription($_GET['switch-subscription']);
+			$subscription = wcs_get_subscription( $_GET['switch-subscription'] );
 			$line_item_id = $_GET['item'];
 			foreach ( $subscription->get_items() as $item_id => $item_values ) {
 				$product_id = $item_values->get_product_id();
-
-				if (($line_item_id == $item_id) && ($product_id == $product->get_parent_id())) {
+				if ( ( $line_item_id == $item_id ) && ( $product_id == $product->get_parent_id() ) ) {
 					$is_purchasable = true;
 				}
 			}
@@ -376,7 +390,6 @@ function wcs_restriction_is_purchasable_switch( $is_purchasable, $product ) {
 * @return int
 */
 function get_product_quantity_in_cart( $product_id ) {
-
 	$quantity = 0;
 
 	if ( ! empty( WC()->cart->cart_contents ) ) {
@@ -400,11 +413,12 @@ function get_product_quantity_in_cart( $product_id ) {
 * @return int
 */
 function wcs_restriction_quantity_input_max( $max, $product ) {
+
 	$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
 	// (the total number allowed - the total quantity of active subscriptions to this product - number of products in the cart)
-	$product_restriction_option = wcs_restrict_product_get_restriction( $product->get_id());
-	$cache = (null !== get_option('wcs_restriction_cache') ? get_option('wcs_restriction_cache') : 0);
-	$num_active_subs_for_product = (isset($cache[$product->get_id()]) ? $cache[$product->get_id()] : 0);
+	$product_restriction_option = wcs_restrict_product_get_restriction( $product->get_id() );
+	$cache = ( null !== get_option( 'wcs_restriction_cache' ) ? get_option( 'wcs_restriction_cache' ) : 0);
+	$num_active_subs_for_product = ( isset( $cache[$product->get_id()] ) ? $cache[$product->get_id()] : 0);
 	$quantity_in_cart = get_product_quantity_in_cart(	$product->get_id() );
 	$max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
 
@@ -455,14 +469,14 @@ function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quan
 */
 function wcs_restriction_update_validate_quantity( $passed, $cart_item_key, $values, $quantity ) {
 
-	$cart_item = WC()->cart->get_cart_item($cart_item_key);
+	$cart_item = WC()->cart->get_cart_item( $cart_item_key );
 	$product_id = $cart_item['product_id'];
-	$product = wc_get_product($product_id);
+	$product = wc_get_product( $product_id );
 
 	$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
-	$product_restriction_option = wcs_restrict_product_get_restriction( $product_id);
-	$cache = (null !== get_option('wcs_restriction_cache') ? get_option('wcs_restriction_cache') : 0);
-	$num_active_subs_for_product = (isset($cache[$product_id]) ? $cache[$product_id] : 0);
+	$product_restriction_option = wcs_restrict_product_get_restriction( $product_id );
+	$cache = ( null !== get_option( 'wcs_restriction_cache' ) ? get_option( 'wcs_restriction_cache' ) : 0 );
+	$num_active_subs_for_product = ( isset( $cache[$product_id] ) ? $cache[$product_id] : 0 );
 	$quantity_in_cart = get_product_quantity_in_cart(	$product->get_parent_id() );
 	$product_max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
 
