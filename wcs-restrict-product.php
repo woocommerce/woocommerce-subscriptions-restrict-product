@@ -153,7 +153,7 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 	$unended_statuses = array( 'active', 'pending', 'on-hold', 'pending-cancel' );
 
 	if ( array_key_exists( $new_status, $unended_statuses ) && ! array_key_exists( $old_status, $unended_statuses ) ) {
-      foreach ( $subscription->get_items() as $item_id => $line_item ) {
+			foreach ( $subscription->get_items() as $item_id => $line_item ) {
           $product_id = $line_item->get_product_id();
           $quantity = $line_item->get_quantity();
           if ( ! array_key_exists( $product_id, $cache ) ) {

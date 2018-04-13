@@ -1,4 +1,4 @@
-**NOTE: This mini-plugin is still in development and isn't ready for production**
+**NOTE: This mini-plugin is still in beta. If you'd like to be a tester, please let us know :) **
 
 # WooCommerce Subscriptions Restrict Product
 
