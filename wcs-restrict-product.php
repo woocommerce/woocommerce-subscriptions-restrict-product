@@ -232,14 +232,22 @@ function save_restrict_product_admin_settings() {
 function wcs_restriction_admin_edit_product_fields() {
 	global $post;
 
-	echo '<div class="options_group restrict_product show_if_subscription show_if_variable-subscription">';
-
+	echo '<div class="options_group restrict_product show_if_subscription show_if_variable-subscription"><p><strong>Restrict Product</strong></p>';
+	woocommerce_wp_checkbox(
+		array(
+			'id'            => '_product_restrict_YN',
+			'label'         => __('Activate product-level restriction?', 'woocommerce-subscriptions' ),
+			'desc_tip' => 'true',
+			'description'   => __( 'This will override any sitewide product restriction.', 'woocommerce-subscriptions' ),
+			'value'         => get_post_meta( $post->ID, '_product_restrict_YN', true ),
+			)
+		);
 	woocommerce_wp_text_input( array(
 		'id'          => '_product_restriction',
-		'label'       => __( 'Restrict product', 'woocommerce-subscriptions' ),
+		'label'       => __( 'Product-level restriction', 'woocommerce-subscriptions' ),
 		'desc_tip' => 'true',
-		'description' => __( 'Restrict product to a total number of subscriptions on your site. Leave blank or set to "0" to deactivate.' ),
-		'placeholder' => '0',
+		'description' => __( 'Restrict product to a total number of unended subscriptions on your site. Activate on product level and leave blank to have product ignore sitewide restriction.'  ),
+		'placeholder' => '',
 		'type' => 'number',
 		'custom_attributes' => array(
 			'step' => '1',
@@ -256,6 +264,8 @@ function wcs_restriction_admin_edit_product_fields() {
 * @param int
 */
 function wcs_restriction_save_product_fields( $post_id ) {
+	$product_restrict_YN = $_POST['_product_restrict_YN'];
+	update_post_meta( $post_id, '_product_restrict_YN', esc_attr( $product_restrict_YN ) );
 	$product_restriction = $_POST['_product_restriction'];
 	update_post_meta( $post_id, '_product_restriction', esc_attr( $product_restriction ) );
 }
@@ -268,10 +278,12 @@ function wcs_restriction_save_product_fields( $post_id ) {
 */
 function wcs_restrict_product_get_restriction( $product_id ) {
 
+	$product_restrict_YN = get_post_meta( $product_id, '_product_restrict_YN', true );
 	$product_restriction = get_post_meta( $product_id, '_product_restriction', true );
-
-	if ( !isset( $product_restriction ) || empty( $product_restriction ) || 0 == $product_restriction ) {
+	if ( 'yes' != $product_restrict_YN ) {
 		$product_restriction = get_option( '_default_product_restriction', 0 );
+	} elseif ( !isset( $product_restriction ) || empty( $product_restriction ) || 0 == $product_restriction ) {
+		$product_restriction = 0;
 	}
 
 	return $product_restriction;
@@ -291,7 +303,7 @@ function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
 		$product_restriction_option = wcs_restrict_product_get_restriction( $id );
 
 		// uncomment the next line to print the current cache
-		// error_log( print_r( $cache, TRUE ) );
+		// error_log( 'cache:' . print_r($cache, TRUE ) );
 
 		if ( $cache != false ) {
 			if ( isset($cache[$id] ) && ( $product_restriction_option > 0 ) && ( $cache[$id] >= $product_restriction_option ) ) {
@@ -417,11 +429,15 @@ function wcs_restriction_quantity_input_max( $max, $product ) {
 	$product_restriction_option = $num_active_subs_for_product = $quantity_in_cart = 0;
 	// (the total number allowed - the total quantity of active subscriptions to this product - number of products in the cart)
 	$product_restriction_option = wcs_restrict_product_get_restriction( $product->get_id() );
-	$cache = ( null !== get_option( 'wcs_restriction_cache' ) ? get_option( 'wcs_restriction_cache' ) : 0);
-	$num_active_subs_for_product = ( isset( $cache[$product->get_id()] ) ? $cache[$product->get_id()] : 0);
-	$quantity_in_cart = get_product_quantity_in_cart(	$product->get_id() );
-	$max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
 
+	if ( 0 == $product_restriction_option ) {
+		$max = 9999;
+	} else {
+		$cache = ( null !== get_option( 'wcs_restriction_cache' ) ? get_option( 'wcs_restriction_cache' ) : 0);
+		$num_active_subs_for_product = ( isset( $cache[$product->get_id()] ) ? $cache[$product->get_id()] : 0);
+		$quantity_in_cart = get_product_quantity_in_cart(	$product->get_id() );
+		$max = $product_restriction_option - $num_active_subs_for_product - $quantity_in_cart;
+	}
 	return $max;
 };
 
@@ -438,7 +454,6 @@ function wcs_restriction_quantity_input_max( $max, $product ) {
 function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quantity) {
 	$product = wc_get_product( $product_id );
 	$product_max = wcs_restriction_quantity_input_max( 0, $product );
-
 	if ( ! empty( $product_max ) ) {
 		if ( false == $product_max ) {
 			return $passed;
