@@ -36,7 +36,8 @@ You can set a default storewide restriction which will apply to all subscription
 
 You can also set a product restriction for a specific product by editing the product, and clicking on the 'Advanced Options' tab in the Product Data metabox. This will set the product restriction on a product level for simple and variable subscription products. That means that the restriction applies no matter which variation of a variable product is subscribed to.
 
-If set to any number other than '0', the product-level restriction will override the storewide restriction setting.
+- To activate the product-level restriction, you must click the "Activate product-level restriction" checkbox.
+- If "Activate product-level restriction" checkbox is checked, but the restriction quantity is blank, then no restriction will be applied to this product, even if there is a systemwide default set elsewhere.
 
 ![Product settings](product-settings.png)
 
@@ -58,8 +59,12 @@ For this reason, we recommend you add in some descriptive text to your product d
 
 ### Additional Notes
 
-- Restrictions don't apply retroactively, only to future purchases. In other words, any given purchase is checked against the current restriction and current number of active site-wide subscriptions. No already-existing subscriptions will be cancelled or suspended if you change the restriction number.
+- Restrictions don't apply retroactively, only to future purchases. In other words, any given purchase is checked against the current restriction and current number of active site-wide subscriptions. No already-existing subscriptions will be cancelled or suspended if you change the restriction number. Future purchases _will_ be checked against subscriptions that existed before the plugin was activated, however.
 - Deactivating the plugin will stop the restriction checks, and will delete the cache. However, the restriction option values (set in the WooCommerce settings tab or product options) will stay in place in case you choose to reactivate the plugin in the future.
+
+### Known Issues
+
+- Subscriptions _created_ in the admin area won't add to the cache, only ones purchased the normal way through the checkout process. You can refresh the cache by deactivating and reactivating the plugin for now. (note: subscriptions _cancelled_ in the admin _will_ be removed from the cache)
 
 ### Updates
 
