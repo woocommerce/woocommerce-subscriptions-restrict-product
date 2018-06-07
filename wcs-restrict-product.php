@@ -8,12 +8,12 @@
 * License: GPLv3
 * Version: 1.0.0
 * Requires at least: 4.0
-* Tested up to: 4.8
+* Tested up to: 4.9.2
 *
 * GitHub Plugin URI: Prospress/woocommerce-subscriptions-one-to-one
 * GitHub Branch: master
 *
-* Copyright 2017 Prospress, Inc.  (email : freedoms@prospress.com)
+* Copyright 2018 Prospress, Inc.  (email : freedoms@prospress.com)
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -97,6 +97,7 @@ function create_wcs_restriction_cache() {
 
 	$unended_subscriptions = wcs_get_subscriptions( array(
 		'subscription_status' => array( 'active', 'pending', 'on-hold', 'pending-cancel' ),
+		'subscriptions_per_page' => -1,
 	) );
 
 	foreach ( $unended_subscriptions as $subscription ) {
@@ -314,8 +315,10 @@ function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
 		$cache = get_option( 'wcs_restriction_cache' );
 		$product_restriction_option = wcs_restrict_product_get_restriction( $id );
 
-		// uncomment the next line to print the current cache
-		// error_log( 'cache:' . print_r($cache, TRUE ) );
+		// uncomment the following lines to print the current cache
+		// $log = new WC_Logger();
+		// $log_entry = 'Cache: ' . print_r( $cache, TRUE);
+		// $log->add( 'wcs-restrict-product-debug', $log_entry );
 
 		if ( $cache != false ) {
 			if ( isset($cache[$id] ) && ( $product_restriction_option > 0 ) && ( $cache[$id] >= $product_restriction_option ) ) {
