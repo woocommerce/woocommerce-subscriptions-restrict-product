@@ -103,10 +103,13 @@ function create_wcs_restriction_cache() {
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
 			$product_id = $line_item->get_product_id();
 			$quantity = $line_item->get_quantity();
-			if ( !array_key_exists( $product_id, $products_with_subscription ) ) {
-				$products_with_subscription[$product_id] = 0;
+			$product = wc_get_product( $product_id );
+			if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
+				if ( !array_key_exists( $product_id, $products_with_subscription ) ) {
+					$products_with_subscription[$product_id] = 0;
+				}
+				$products_with_subscription[$product_id] += $quantity;
 			}
-			$products_with_subscription[$product_id] += $quantity;
 		}
 	}
 
@@ -131,10 +134,13 @@ function add_to_wcs_restriction_cache( $subscription, $order = null, $recurring_
 	foreach ( $subscription->get_items() as $item_id => $line_item ) {
 		$product_id = $line_item->get_product_id();
 		$quantity = $line_item->get_quantity();
-		if ( !array_key_exists( $product_id, $cache ) ) {
-			$cache[$product_id] = 0;
+		$product = wc_get_product( $product_id );
+		if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
+			if ( !array_key_exists( $product_id, $cache ) ) {
+				$cache[$product_id] = 0;
+			}
+			$cache[$product_id] += $quantity;
 		}
-		$cache[$product_id] += $quantity;
 	}
 
 	update_option( 'wcs_restriction_cache', $cache );
@@ -154,12 +160,15 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 
 	if ( in_array( $new_status, $unended_statuses ) && !in_array( $old_status, $unended_statuses ) ) {
 			foreach ( $subscription->get_items() as $item_id => $line_item ) {
-          $product_id = $line_item->get_product_id();
-          $quantity = $line_item->get_quantity();
+        $product_id = $line_item->get_product_id();
+        $quantity = $line_item->get_quantity();
+				$product = wc_get_product( $product_id );
+				if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
           if ( ! array_key_exists( $product_id, $cache ) ) {
               $cache[ $product_id ] = 0;
           }
           $cache[ $product_id ] += $quantity;
+				}
       }
       update_option( 'wcs_restriction_cache', $cache );
 
@@ -167,10 +176,13 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
 			$product_id = $line_item->get_product_id();
 			$quantity = $line_item->get_quantity();
-			if ( $cache[$product_id] <= 1 ) {
-				unset( $cache[$product_id] ); // remove product from array completely
-			} elseif ( $cache[$product_id] > 1 ) {
-				$cache[$product_id] -= $quantity; // or just reduce the number
+			$product = wc_get_product( $product_id );
+			if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
+				if ( $cache[$product_id] <= 1 ) {
+					unset( $cache[$product_id] ); // remove product from array completely
+				} elseif ( $cache[$product_id] > 1 ) {
+					$cache[$product_id] -= $quantity; // or just reduce the number
+				}
 			}
 		}
 		update_option( 'wcs_restriction_cache', $cache );
