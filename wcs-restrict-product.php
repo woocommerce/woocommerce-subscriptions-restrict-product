@@ -467,6 +467,19 @@ function wcs_restriction_quantity_input_max( $max, $product ) {
 * @return boolean
 */
 function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quantity) {
+
+// this applies to checkout when renewing/resubscribing too, so we need to bypass it in those cases
+	if ( ( isset( $_GET['resubscribe'] ) || false !== ( $resubscribe_cart_item = wcs_cart_contains_resubscribe() ) || isset( $_GET['subscription_renewal'] ) || wcs_cart_contains_renewal()) ) {
+		return $passed;
+	} elseif ( WC()->session->cart ) {
+		foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
+			if ( $product->get_id() == $cart_item['product_id'] && ( isset( $cart_item['subscription_renewal'] ) || isset( $cart_item['subscription_resubscribe'] ) ) ) {
+				return $passed;
+			}
+		}
+	}
+
+
 	$product = wc_get_product( $product_id );
 	$product_max = wcs_restriction_quantity_input_max( 0, $product );
 	if ( ! empty( $product_max ) ) {
