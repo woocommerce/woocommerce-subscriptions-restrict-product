@@ -473,7 +473,7 @@ function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quan
 		return $passed;
 	} elseif ( WC()->session->cart ) {
 		foreach ( WC()->session->cart as $cart_item_key => $cart_item ) {
-			if ( $product->get_id() == $cart_item['product_id'] && ( isset( $cart_item['subscription_renewal'] ) || isset( $cart_item['subscription_resubscribe'] ) ) ) {
+			if ( $product_id == $cart_item['product_id'] && ( isset( $cart_item['subscription_renewal'] ) || isset( $cart_item['subscription_resubscribe'] ) ) ) {
 				return $passed;
 			}
 		}
