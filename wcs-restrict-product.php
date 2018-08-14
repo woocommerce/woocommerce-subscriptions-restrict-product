@@ -6,7 +6,7 @@
 * Author: Prospress Inc.
 * Author URI: https://prospress.com/
 * License: GPLv3
-* Version: 1.0.0
+* Version: 1.0.1
 * Requires at least: 4.0
 * Tested up to: 4.9.2
 *
@@ -340,10 +340,10 @@ function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
 function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 
 	// check if restricted first
-	$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
+	$is_purchasable_check = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
 
 	// then, allow to be purchased if renewal or resubscribe
-	if ( false === $is_purchasable ) {
+	if ( false === $is_purchasable_check ) {
 		// Resubscribe logic
 		if ( isset( $_GET['resubscribe'] ) || false !== ( $resubscribe_cart_item = wcs_cart_contains_resubscribe() ) ) {
 			$subscription_id       = ( isset( $_GET['resubscribe'] ) ) ? absint( $_GET['resubscribe'] ) : $resubscribe_cart_item['subscription_resubscribe']['subscription_id'];
@@ -378,10 +378,10 @@ function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 function wcs_restriction_is_purchasable_switch( $is_purchasable, $product ) {
 
 	// Check if the product is restricted first
-	$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
+	$is_purchasable_check = wcs_restricted_is_purchasable( $is_purchasable, $product->get_parent_id() );
 
 	// We're only concerned with variable products during switch because individual grouped products should be handled on their own.
-	if ( false === $is_purchasable && 'subscription_variation' === $product->get_type() ) {
+	if ( false === $is_purchasable_check && 'subscription_variation' === $product->get_type() ) {
 		// If the customer has requested to switch
 		if ( isset( $_GET['switch-subscription'] ) ) {
 			// check if the product is a variation of the same parent product
