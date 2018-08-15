@@ -70,8 +70,8 @@ add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_c
 add_filter( 'woocommerce_checkout_subscription_created', 'add_to_wcs_restriction_cache' );
 
 // Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
-add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
-add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 12, 2 );
+add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 11, 2 );
+add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 11, 2 );
 
 // bypasses restriction for switches only if switching to same variable product
 add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
@@ -340,10 +340,10 @@ function wcs_restricted_is_purchasable( $is_purchasable, $id ) {
 function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 
 	// check if restricted first
-	$is_purchasable_check = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
+	$is_purchasable = wcs_restricted_is_purchasable( $is_purchasable, $product->get_id() );
 
 	// then, allow to be purchased if renewal or resubscribe
-	if ( false === $is_purchasable_check ) {
+	if ( false === $is_purchasable ) {
 		// Resubscribe logic
 		if ( isset( $_GET['resubscribe'] ) || false !== ( $resubscribe_cart_item = wcs_cart_contains_resubscribe() ) ) {
 			$subscription_id       = ( isset( $_GET['resubscribe'] ) ) ? absint( $_GET['resubscribe'] ) : $resubscribe_cart_item['subscription_resubscribe']['subscription_id'];
