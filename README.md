@@ -51,6 +51,9 @@ _Automatic renewals_ are not restricted at all, and should process normally. Sim
 #### Subscription Switching
 Switching is accounted for when checking restrictions. When switching between simple subscription products, the checks still occur as normal. When switching between variations of the same product, the restrictions are ignored, allowing the switch to occur.
 
+### Visibility
+When displaying a product in the catalog or archive pages, this plugin will hide the product if it is restricted, _and_ if the 'Out of stock visibility' option is checked in WooCommerce settings -> products -> inventory tab.
+
 ### Warning Messages
 
 There is currently no way to customize the warning message presented when a restriction is encountered. Additionally, when product variations are deemed not purchasable, the default WooCommerce alert box is triggered, which is not descriptive of _why_.

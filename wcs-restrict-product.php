@@ -76,8 +76,8 @@ add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restrictio
 // bypasses restriction for switches only if switching to same variable product
 add_filter( 'woocommerce_subscription_variation_is_purchasable', 'wcs_restriction_is_purchasable_switch', 12, 2 );
 
-// when displaying product on front end, hides product if restricted
-add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_purchasable', 10, 2 );
+// when displaying product on front end, hides product if restricted, and if the 'Out of stock visibility' option is checked in WooCommerce settings -> products -> inventory tab
+add_filter( 'woocommerce_product_is_visible', 'wcs_restricted_is_visible', 10, 2 );
 
 // add max to quantity selector on product page
 add_filter( 'woocommerce_quantity_input_max', 'wcs_restriction_quantity_input_max', 1, 2 );
@@ -366,6 +366,24 @@ function wcs_restriction_is_purchasable_renewal( $is_purchasable, $product ) {
 	}
 
 	return $is_purchasable;
+}
+
+/**
+* when displaying product on front end, hides product if restricted, and if the 'Out of stock visibility' option is checked in WooCommerce settings -> products -> inventory tab
+*
+* @param boolean
+* @param integer
+* @return boolean
+*/
+function wcs_restricted_is_visible( $is_visible, $id ) {
+
+	if ( $is_visible ) {
+		if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
+			$is_visible = wcs_restricted_is_purchasable( $is_visible, $id );
+		}
+	}
+
+	return $is_visible;
 }
 
 /**
