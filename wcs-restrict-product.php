@@ -161,17 +161,17 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 
 	if ( in_array( $new_status, $unended_statuses ) && !in_array( $old_status, $unended_statuses ) ) {
 			foreach ( $subscription->get_items() as $item_id => $line_item ) {
-        $product_id = $line_item->get_product_id();
-        $quantity = $line_item->get_quantity();
+		$product_id = $line_item->get_product_id();
+		$quantity = $line_item->get_quantity();
 				$product = wc_get_product( $product_id );
 				if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
-          if ( ! array_key_exists( $product_id, $cache ) ) {
-              $cache[ $product_id ] = 0;
-          }
-          $cache[ $product_id ] += $quantity;
+		  if ( ! array_key_exists( $product_id, $cache ) ) {
+			  $cache[ $product_id ] = 0;
+		  }
+		  $cache[ $product_id ] += $quantity;
 				}
-      }
-      update_option( 'wcs_restriction_cache', $cache );
+	  }
+	  update_option( 'wcs_restriction_cache', $cache );
 
 	} elseif ( in_array( $old_status, $unended_statuses ) && !in_array( $new_status, $unended_statuses ) ) {
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
@@ -499,6 +499,10 @@ function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quan
 
 
 	$product = wc_get_product( $product_id );
+	if (!$product->is_type( 'subscription' ) && !$product->is_type( 'variable-subscription' )) {
+		return $passed;
+	}
+
 	$product_max = wcs_restriction_quantity_input_max( 0, $product );
 	if ( ! empty( $product_max ) ) {
 		if ( false == $product_max ) {
