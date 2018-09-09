@@ -1,5 +1,3 @@
-**NOTE: This mini-plugin is still in beta. If you'd like to be a tester, please let us know :) **
-
 # WooCommerce Subscriptions Restrict Product
 
 Restricts subscription products to a certain number of total active (unended) subscriptions on a site.
@@ -65,9 +63,10 @@ For this reason, we recommend you add in some descriptive text to your product d
 - Restrictions don't apply retroactively, only to future purchases. In other words, any given purchase is checked against the current restriction and current number of active site-wide subscriptions. No already-existing subscriptions will be cancelled or suspended if you change the restriction number. Future purchases _will_ be checked against subscriptions that existed before the plugin was activated, however.
 - Deactivating the plugin will stop the restriction checks, and will delete the cache. However, the restriction option values (set in the WooCommerce settings tab or product options) will stay in place in case you choose to reactivate the plugin in the future.
 
-### Known Issues
+### Troubleshooting
 
-- Subscriptions _created_ in the admin area won't add to the cache, only ones purchased the normal way through the checkout process. You can refresh the cache by deactivating and reactivating the plugin for now. (note: subscriptions _cancelled_ in the admin _will_ be removed from the cache)
+To view the current cache for troubleshooting purposes, navigate to the 'plugins' page and click the 'view cache' option.
+![View cache](view-cache.png)
 
 ### Updates
 
