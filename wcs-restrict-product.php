@@ -76,8 +76,11 @@ add_action( 'woocommerce_process_product_meta', 'wcs_restriction_save_product_fi
 // updates the array whenever subscription status is updated
 add_filter( 'woocommerce_subscription_status_updated', 'update_wcs_restriction_cache', 10, 3 );
 
-// updates the array whenever subscription is created
+// updates the array whenever subscription is created through checkout
 add_filter( 'woocommerce_checkout_subscription_created', 'add_to_wcs_restriction_cache' );
+
+// refreshes cache whenever a subscription is edited or created in admin
+add_action( 'woocommerce_process_shop_order_meta', 'refresh_wcs_restriction_cache', 60, 2 );
 
 // Prevents purchase of restricted products, but still allows manual renewals and payment of failed renewal orders
 add_filter( 'woocommerce_subscription_is_purchasable', 'wcs_restriction_is_purchasable_renewal', 11, 2 );
@@ -170,7 +173,6 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 	$unended_statuses = array( 'active', 'pending', 'on-hold', 'pending-cancel' );
 
 	if ( in_array( $new_status, $unended_statuses ) && !in_array( $old_status, $unended_statuses ) ) {
-<<<<<<< HEAD
 		foreach ( $subscription->get_items() as $item_id => $line_item ) {
 			$product_id = $line_item->get_product_id();
 			$quantity = $line_item->get_quantity();
@@ -182,19 +184,6 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 				$cache[ $product_id ] += $quantity;
 			}
 		}
-=======
-			foreach ( $subscription->get_items() as $item_id => $line_item ) {
-		$product_id = $line_item->get_product_id();
-		$quantity = $line_item->get_quantity();
-				$product = wc_get_product( $product_id );
-				if( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' )){
-		  if ( ! array_key_exists( $product_id, $cache ) ) {
-			  $cache[ $product_id ] = 0;
-		  }
-		  $cache[ $product_id ] += $quantity;
-				}
-	  }
->>>>>>> 5a59f3a091113f9e4d9ed25e5a82a7817beeff7f
 	  update_option( 'wcs_restriction_cache', $cache );
 
 	} elseif ( in_array( $old_status, $unended_statuses ) && !in_array( $new_status, $unended_statuses ) ) {
@@ -214,6 +203,18 @@ function update_wcs_restriction_cache( $subscription, $new_status, $old_status )
 	}
 }
 
+/**
+* refreshes the cache whenever subscription is saved in admin
+*
+* @param int $post_id
+* @param int $post
+*/
+function refresh_wcs_restriction_cache( $post_id, $post ) {
+	if ( 'shop_subscription' == $post->post_type ) {
+		cleanup_wcs_restriction_cache();
+		create_wcs_restriction_cache();
+	}
+}
 /**
  * Append "Product Restriction" section in the Subscriptions settings tab.
  *
@@ -522,12 +523,8 @@ function wcs_restriction_qty_add_to_cart_validation( $passed, $product_id, $quan
 	}
 
 	$product = wc_get_product( $product_id );
-<<<<<<< HEAD
 
 	if ( !$product->is_type( 'subscription' ) && !$product->is_type( 'variable-subscription' ) ) {
-=======
-	if (!$product->is_type( 'subscription' ) && !$product->is_type( 'variable-subscription' )) {
->>>>>>> 5a59f3a091113f9e4d9ed25e5a82a7817beeff7f
 		return $passed;
 	}
 
